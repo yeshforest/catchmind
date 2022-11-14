@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move 8 elements to &apos;images&apos;&#x0D;&#x0A;- Original project: &apos;JavaGameClient&apos;&#x0D;&#x0A;- Destination element: &apos;images&apos;&#x0D;&#x0A;- Original elements:&#x0D;&#x0A;     black.PNG&#x0D;&#x0A;     blue.PNG&#x0D;&#x0A;     exit.png&#x0D;&#x0A;     green.PNG&#x0D;&#x0A;     icon1.jpg&#x0D;&#x0A;     eraser.png&#x0D;&#x0A;     red.PNG&#x0D;&#x0A;     yellow.PNG&#x0D;&#x0A;- Update references to refactored element" description="Move files" element1="black.PNG" element2="blue.PNG" element3="exit.png" element4="green.PNG" element5="icon1.jpg" element6="eraser.png" element7="red.PNG" element8="yellow.PNG" files="8" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1637725706852" target="images" units="0" version="1.0"/>
+</session>

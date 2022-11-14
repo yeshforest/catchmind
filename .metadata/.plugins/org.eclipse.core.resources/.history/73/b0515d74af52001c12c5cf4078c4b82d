@@ -1,0 +1,878 @@
+
+// JavaObjClientView.java ObjecStram 기반 Client
+//실질적인 채팅 창
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.image.ImageObserver;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.Socket;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.JToggleButton;
+import javax.swing.JList;
+import javax.swing.border.TitledBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+
+import java.util.*;
+import java.awt.*;
+
+public class JavaGameClientView extends JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private JPanel contentPane;
+	private JTextField txtInput;
+	private String UserName;
+	private JButton btnSend;
+	private static final int BUF_LEN = 128; // Windows 처럼 BUF_LEN 을 정의
+	private Socket socket; // 연결소켓
+	private InputStream is;
+	private OutputStream os;
+	private DataInputStream dis;
+	private DataOutputStream dos;
+
+	private ObjectInputStream ois;
+	private ObjectOutputStream oos;
+
+	private JLabel u1_lblUserName,u2_lblUserName,u3_lblUserName,u4_lblUserName,u5_lblUserName,u6_lblUserName;
+	private JTextPane u1_textArea,u2_textArea,u3_textArea,u4_textArea,u5_textArea,u6_textArea;
+
+	private Frame frame;
+	private FileDialog fd;
+	private JButton imgBtn;
+
+	JPanel panel;
+	private JLabel lblMouseEvent;
+	private Graphics gc;
+	private int pen_size = 2; // minimum 2
+	// 그려진 Image를 보관하는 용도, paint() 함수에서 이용한다.
+	private Image panelImage = null; 
+	private Graphics gc2 = null;
+	
+	int x, y, ox, oy;         // 움직인 후의 좌표(x, y)와 움직이기 전의 좌표(ox, oy)
+	Color c ;//색 저장용
+	/*도형그리기 변수들*/
+	int sx,sy,ex,ey;//사각형 그리기 startx,y, endx,y  
+	private String shape="fd";//도형보내기용
+	
+	private Image tmpImage = null; 
+	private Graphics gc3 = null;//도형 중간과정
+	
+	
+	
+	
+	 /*user1프로필네모 만들기 시도*/
+	 
+	private JPanel contentPane1;
+
+	
+	/**
+	 * Create the frame.
+	 * @throws BadLocationException 
+	 */
+	public JavaGameClientView(String username, String ip_addr, String port_no)  {
+		setResizable(false);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 912, 660);//Jframe크기
+		//그위에 JPanel로 contentPane만든다
+		contentPane = new JPanel();
+		contentPane.setBackground(new Color(0, 102, 153));
+		contentPane.setForeground(new Color(0, 0, 0));
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		
+/*user1프로필네모 만들기 시도*/
+		
+		JPanel u1_contentPane = new JPanel();
+		u1_contentPane.setBackground(new Color(0, 0, 102));
+		u1_contentPane.setBounds(6, 35, 176, 122);
+		contentPane.add(u1_contentPane);
+		
+				u1_lblUserName = new JLabel("Name");
+				u1_lblUserName.setForeground(Color.WHITE);
+				u1_contentPane.add(u1_lblUserName);
+				u1_lblUserName.setBorder(new LineBorder(new Color(0, 0, 0)));
+				u1_lblUserName.setBackground(Color.WHITE);
+				u1_lblUserName.setFont(new Font("굴림", Font.BOLD, 14));
+				u1_lblUserName.setHorizontalAlignment(SwingConstants.CENTER);
+				//서버에서 user이름을 가져와서  이름을 쓴다.
+				u1_lblUserName.setText(username);
+
+		
+	
+
+		JScrollPane u1_scrollPane = new JScrollPane();
+		u1_scrollPane.setBounds(722, 431, 176, 170);
+		contentPane.add(u1_scrollPane);
+		
+				u1_textArea = new JTextPane();
+				u1_textArea.setBackground(new Color(255, 255, 204));
+				u1_scrollPane.setViewportView(u1_textArea);
+				u1_textArea.setEditable(true);
+				u1_textArea.setFont(new Font("굴림체", Font.PLAIN, 14));
+
+		txtInput = new JTextField();
+		txtInput.setBounds(331, 505, 301, 40);
+		contentPane.add(txtInput);
+		txtInput.setColumns(10);
+
+		btnSend = new JButton("Send");
+		btnSend.setFont(new Font("굴림", Font.PLAIN, 14));
+		btnSend.setBounds(644, 504, 69, 40);
+		contentPane.add(btnSend);
+		setVisible(true);
+
+		AppendText("User " + username + " connecting " + ip_addr + " " + port_no);
+		UserName = username;
+
+		imgBtn = new JButton("+");
+		imgBtn.setFont(new Font("굴림", Font.PLAIN, 16));
+		imgBtn.setBounds(660, 554, 50, 40);
+		contentPane.add(imgBtn);
+
+		JButton btnNewButton = new JButton("");
+		btnNewButton.setIcon(new ImageIcon("images/exit.png"));
+		btnNewButton.setFont(new Font("굴림", Font.PLAIN, 14));
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ChatMsg msg = new ChatMsg(UserName, "400", "Bye");
+				SendObject(msg);
+				System.exit(0);
+			}
+		});
+		btnNewButton.setBounds(663, 10, 50, 40);
+		contentPane.add(btnNewButton);
+
+		panel = new JPanel();
+		panel.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panel.setBackground(Color.WHITE);
+		panel.setBounds(187, 54, 526, 430);
+		contentPane.add(panel);
+		gc = panel.getGraphics();
+		
+		// Image 영역 보관용. paint() 에서 이용한다.
+		panelImage = createImage(panel.getWidth(), panel.getHeight());
+		gc2 = panelImage.getGraphics();
+		gc2.setColor(panel.getBackground());
+		gc2.fillRect(0,0, panel.getWidth(),  panel.getHeight());
+		gc2.setColor(Color.BLACK);
+		gc2.drawRect(0,0, panel.getWidth()-1,  panel.getHeight()-1);
+		
+		
+		tmpImage = createImage(panel.getWidth(), panel.getHeight());
+		gc3 = tmpImage.getGraphics();
+		gc3.setColor(panel.getBackground());
+		gc3.fillRect(0,0, panel.getWidth(),  panel.getHeight());
+		gc3.setColor(Color.BLACK);
+		gc3.drawRect(0,0, panel.getWidth()-1,  panel.getHeight()-1);
+		
+		
+		lblMouseEvent = new JLabel("<dynamic>");
+		lblMouseEvent.setHorizontalAlignment(SwingConstants.CENTER);
+		lblMouseEvent.setFont(new Font("굴림", Font.BOLD, 14));
+		lblMouseEvent.setBorder(new LineBorder(new Color(0, 0, 0)));
+		lblMouseEvent.setBackground(Color.WHITE);
+		lblMouseEvent.setBounds(331, 555, 314, 31);
+		contentPane.add(lblMouseEvent);
+		
+		JPanel u2_contentPane = new JPanel();
+		u2_contentPane.setBackground(new Color(0, 0, 102));
+		u2_contentPane.setBounds(6, 167, 176, 122);
+		contentPane.add(u2_contentPane);
+		
+		JLabel u2_lblUserName = new JLabel("<dynamic>");
+		u2_lblUserName.setForeground(Color.WHITE);
+		u2_lblUserName.setHorizontalAlignment(SwingConstants.CENTER);
+		u2_lblUserName.setFont(new Font("굴림", Font.BOLD, 14));
+		u2_lblUserName.setBorder(new LineBorder(new Color(0, 0, 0)));
+		u2_lblUserName.setBackground(Color.WHITE);
+		u2_contentPane.add(u2_lblUserName);
+		
+		JPanel u3_contentPane = new JPanel();
+		u3_contentPane.setBackground(new Color(0, 0, 102));
+		u3_contentPane.setBounds(6, 299, 176, 122);
+		contentPane.add(u3_contentPane);
+		
+		JLabel u3_lblUserName = new JLabel("<dynamic>");
+		u3_lblUserName.setForeground(Color.WHITE);
+		u3_lblUserName.setHorizontalAlignment(SwingConstants.CENTER);
+		u3_lblUserName.setFont(new Font("굴림", Font.BOLD, 14));
+		u3_lblUserName.setBorder(new LineBorder(new Color(0, 0, 0)));
+		u3_lblUserName.setBackground(Color.WHITE);
+		u3_contentPane.add(u3_lblUserName);
+		
+		JPanel u4_contentPane = new JPanel();
+		u4_contentPane.setBackground(new Color(0, 0, 102));
+		u4_contentPane.setBounds(722, 35, 176, 122);
+		contentPane.add(u4_contentPane);
+		
+		JLabel u4_lblUserName = new JLabel("<dynamic>");
+		u4_lblUserName.setForeground(Color.WHITE);
+		u4_lblUserName.setHorizontalAlignment(SwingConstants.CENTER);
+		u4_lblUserName.setFont(new Font("굴림", Font.BOLD, 14));
+		u4_lblUserName.setBorder(new LineBorder(new Color(0, 0, 0)));
+		u4_lblUserName.setBackground(Color.WHITE);
+		u4_contentPane.add(u4_lblUserName);
+		
+		JPanel u5_contentPane = new JPanel();
+		u5_contentPane.setBackground(new Color(0, 0, 102));
+		u5_contentPane.setBounds(722, 167, 176, 122);
+		contentPane.add(u5_contentPane);
+		
+		JLabel u5_lblUserName = new JLabel("<dynamic>");
+		u5_lblUserName.setForeground(Color.WHITE);
+		u5_lblUserName.setHorizontalAlignment(SwingConstants.CENTER);
+		u5_lblUserName.setFont(new Font("굴림", Font.BOLD, 14));
+		u5_lblUserName.setBorder(new LineBorder(new Color(0, 0, 0)));
+		u5_lblUserName.setBackground(Color.WHITE);
+		u5_contentPane.add(u5_lblUserName);
+		
+		JPanel u6_contentPane = new JPanel();
+		u6_contentPane.setBackground(new Color(0, 0, 102));
+		u6_contentPane.setBounds(722, 299, 176, 122);
+		contentPane.add(u6_contentPane);
+		
+		JLabel u6_lblUserName = new JLabel("<dynamic>");
+		u6_lblUserName.setForeground(Color.WHITE);
+		u6_lblUserName.setHorizontalAlignment(SwingConstants.CENTER);
+		u6_lblUserName.setFont(new Font("굴림", Font.BOLD, 14));
+		u6_lblUserName.setBorder(new LineBorder(new Color(0, 0, 0)));
+		u6_lblUserName.setBackground(Color.WHITE);
+		u6_contentPane.add(u6_lblUserName);
+		
+		JButton rmv_btn = new JButton("");
+		rmv_btn.setIcon(new ImageIcon("images/eraser.png"));
+		rmv_btn.setFont(new Font("굴림", Font.PLAIN, 16));
+		rmv_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			c = new Color(255,255,255);//밑그림 기능 구현하려면 여기 고쳐야한다.
+			}
+		});
+		rmv_btn.setBounds(270, 505, 50, 42);
+		contentPane.add(rmv_btn);
+		
+		JButton g_btn = new JButton("");
+		g_btn.setIcon(new ImageIcon("images/green.PNG"));
+		g_btn.setFont(new Font("굴림", Font.PLAIN, 16));
+		g_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			c = new Color(0,255,0);//
+			}
+		});
+		g_btn.setBounds(159, 500, 50, 50);
+		contentPane.add(g_btn);
+		
+		JButton y_btn = new JButton("");
+		y_btn.setIcon(new ImageIcon("images/yellow.PNG"));
+		y_btn.setFont(new Font("굴림", Font.PLAIN, 16));
+		y_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			c = new Color(255,255,0);
+			}
+		});
+		y_btn.setBounds(210, 500, 50, 50);
+		contentPane.add(y_btn);
+		
+		JButton blue_btn = new JButton("");
+		blue_btn.setIcon(new ImageIcon("images/blue.PNG"));
+		blue_btn.setFont(new Font("굴림", Font.PLAIN, 16));
+		blue_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			c = new Color(0,0,255);//빨간색 setting
+			}
+		});
+		blue_btn.setBounds(108, 500, 50, 50);
+		contentPane.add(blue_btn);
+		
+		JButton r_btn = new JButton("");
+		r_btn.setIcon(new ImageIcon("images/red.PNG"));
+		r_btn.setFont(new Font("굴림", Font.PLAIN, 16));
+		r_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			c = new Color(255,0,0);//빨간색 setting
+			}
+		});
+		r_btn.setBounds(57, 500, 50, 50);
+		contentPane.add(r_btn);
+		
+		JButton b_btn = new JButton("");
+		b_btn.setIcon(new ImageIcon("images/black.PNG"));
+		b_btn.setFont(new Font("굴림", Font.PLAIN, 16));
+		b_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			c = new Color(0,0,0);
+			}
+		});
+		b_btn.setBounds(6, 500, 50, 50);
+		contentPane.add(b_btn);
+		
+		JButton rmv_btn_1 = new JButton("\uC804\uCCB4\uC9C0\uC6B0\uAE30");
+		rmv_btn_1.setFont(new Font("굴림", Font.PLAIN, 16));
+		rmv_btn_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			
+			}
+		});
+		rmv_btn_1.setBounds(27, 442, 131, 40);
+		contentPane.add(rmv_btn_1);
+		
+		JButton fline = new JButton("l");
+		fline.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				shape="fd";
+			}
+		});
+		fline.setFont(new Font("굴림", Font.PLAIN, 16));
+		fline.setBounds(6, 551, 50, 50);
+		contentPane.add(fline);
+		
+		JButton frec = new JButton("r");
+		frec.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+			shape="fillrect";
+			}
+		});
+		frec.setFont(new Font("굴림", Font.PLAIN, 16));
+		frec.setBounds(57, 551, 50, 50);
+		contentPane.add(frec);
+		
+		JButton rec = new JButton("");
+		rec.setFont(new Font("굴림", Font.PLAIN, 16));
+		rec.setBounds(108, 551, 50, 50);
+		contentPane.add(rec);
+		
+		JButton cir = new JButton("");
+		cir.setFont(new Font("굴림", Font.PLAIN, 16));
+		cir.setBounds(159, 551, 50, 50);
+		contentPane.add(cir);
+		
+		JButton fcir = new JButton("");
+		fcir.setFont(new Font("굴림", Font.PLAIN, 16));
+		fcir.setBounds(210, 551, 50, 50);
+		contentPane.add(fcir);
+		
+		JButton line = new JButton("");
+		line.setFont(new Font("굴림", Font.PLAIN, 16));
+		line.setBounds(257, 551, 50, 50);
+		contentPane.add(line);
+		
+		
+		
+		try {
+			socket = new Socket(ip_addr, Integer.parseInt(port_no));
+//			is = socket.getInputStream();
+//			dis = new DataInputStream(is);
+//			os = socket.getOutputStream();
+//			dos = new DataOutputStream(os);
+
+			oos = new ObjectOutputStream(socket.getOutputStream());
+			oos.flush();
+			ois = new ObjectInputStream(socket.getInputStream());
+
+			// SendMessage("/login " + UserName);
+			//누가 들어오면 server로 이걸 보낸다.
+			ChatMsg obcm = new ChatMsg(UserName, "100", "Hello");
+			SendObject(obcm);
+			//loc은 uservec순서
+			//loc=1이면 첫번째자리
+			//loc=2이면 두번째 자리
+			
+			
+			
+
+			ListenNetwork net = new ListenNetwork();
+			net.start();
+			TextSendAction action = new TextSendAction();
+			btnSend.addActionListener(action);
+			txtInput.addActionListener(action);
+			txtInput.requestFocus();
+			ImageSendAction action2 = new ImageSendAction();
+			imgBtn.addActionListener(action2);
+			MyMouseEvent mouse = new MyMouseEvent();
+			panel.addMouseMotionListener(mouse);
+			panel.addMouseListener(mouse);
+			MyMouseWheelEvent wheel = new MyMouseWheelEvent();
+			panel.addMouseWheelListener(wheel);
+
+
+		} catch (NumberFormatException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			AppendText("connect error");
+		}
+
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+		// Image 영역이 가려졌다 다시 나타날 때 그려준다.
+		gc.drawImage(panelImage, 0, 0, this);
+	}
+	
+	// Server Message를 수신해서 화면에 표시
+	class ListenNetwork extends Thread {
+		public void run() {
+			while (true) {
+				try {
+
+					Object obcm = null;
+					String msg = null;
+					ChatMsg cm;
+					try {
+						obcm = ois.readObject();
+					} catch (ClassNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						break;
+					}
+					if (obcm == null)
+						break;
+					if (obcm instanceof ChatMsg) {
+						cm = (ChatMsg) obcm;
+						msg = String.format("[%s]\n%s", cm.UserName, cm.data);
+					} else
+						continue;
+					switch (cm.code) {
+					case "200": // chat message
+						if (cm.UserName.equals(UserName))
+							AppendTextR(msg); // 내 메세지는 우측에
+						else
+							AppendText(msg);
+						break;
+					case "300": // Image 첨부
+						if (cm.UserName.equals(UserName))
+							AppendTextR("[" + cm.UserName + "]");
+						else
+							AppendText("[" + cm.UserName + "]");
+						AppendImage(cm.img);
+						break;
+					case "500": // Mouse Event 수신
+						DoMouseEvent(cm);
+						break;
+//					case "600":// userlabel에 이름표시
+//						AppendTextR(cm.data);//여기에는 내 자리가 들어있다.
+//						if (cm.data.equals("1")) {
+//							System.out.println("1번");
+//						//	u1_lblUserName.setText(cm.UserName);
+//						}
+//						else if (cm.data.equals("2")) {
+//							System.out.println("2번");
+//							u2_lblUserName.setText(cm.UserName);
+//						}
+//						else if (cm.data.equals("3"))
+//							System.out.println("3번");
+						
+				//		break;
+						
+						
+						
+						
+					}
+				} catch (IOException e) {
+					AppendText("ois.readObject() error");
+					try {
+//						dos.close();
+//						dis.close();
+						ois.close();
+						oos.close();
+						socket.close();
+
+						break;
+					} catch (Exception ee) {
+						break;
+					} // catch문 끝
+				} // 바깥 catch문끝
+
+			}
+		}
+	}
+
+	// Mouse Event 수신 처리
+	public void DoMouseEvent(ChatMsg cm) {
+		
+		if (cm.UserName.matches(UserName)) // 본인 것은 이미 Local 로 그렸다.
+			return;
+		
+		//색 지정
+		gc2.setColor(cm.color);
+		//pensize 지정
+		 Graphics2D g2d = (Graphics2D)gc2;
+        g2d.setStroke(new BasicStroke(cm.pen_size,BasicStroke.CAP_ROUND,0)); 
+		
+        
+		if (cm.mouse_e.getID() ==  MouseEvent.MOUSE_PRESSED) {
+			
+		     ox=cm.mouse_e.getX(); oy=cm.mouse_e.getY();//직선 시작점 기억
+		     sx=cm.x1;sy=cm.y1;//사각형 시작점 기억
+		}
+		
+		else if(cm.mouse_e.getID() ==  MouseEvent.MOUSE_DRAGGED) {
+			// 여기서 그리기
+			if(cm.shape.equals("fd")) {//free drawing인경우
+			 x=cm.mouse_e.getX(); y=cm.mouse_e.getY(); //다음좌표 기억
+			 gc2.drawLine(ox, oy, x, y);//그리기
+			 ox=x; oy=y;
+			 
+			}
+			 
+			}
+		else if(cm.mouse_e.getID() ==  MouseEvent.MOUSE_RELEASED) {
+		if(cm.shape.equals("fillrect")) {//fillrect인경우
+				ex=cm.x2;ey=cm.y2;//released인경우 사각형 끝점 기억
+				 gc2.fillRect(sx, sy, ex-sx, ey-sy);//사각형그리기
+				 
+				}
+		}
+		gc.drawImage(panelImage, 0, 0, panel);
+	}
+
+	public void SendMouseEvent(MouseEvent e) {
+		ChatMsg cm = new ChatMsg(UserName, "500", "MOUSE");
+		cm.mouse_e = e;
+		cm.pen_size = pen_size;
+		cm.color=c;
+		cm.shape=shape;
+		cm.x1=sx;cm.y1=sy;cm.x2=ex;cm.y2=ey;
+		SendObject(cm);
+	}
+
+	class MyMouseWheelEvent implements MouseWheelListener {
+		
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent e) {
+			// TODO Auto-generated method stub
+			if (e.getWheelRotation() < 0) { // 위로 올리는 경우 pen_size 증가
+				if (pen_size < 20)
+					pen_size++;
+			} else {
+				if (pen_size > 2)
+					pen_size--;
+			}
+			lblMouseEvent.setText("mouseWheelMoved Rotation=" + e.getWheelRotation() 
+				+ " pen_size = " + pen_size + " " + e.getX() + "," + e.getY());
+
+		}
+		
+	}
+	// Mouse Event Handler
+	class MyMouseEvent implements MouseListener, MouseMotionListener {
+		
+		//마우스 dragged하면
+		
+		 @Override
+		public void mouseDragged(MouseEvent e) {
+			//몇번째 버튼이 눌러졌는지 알기
+			lblMouseEvent.setText(e.getButton() + " mouseDragged " + e.getX() + "," + e.getY());// 좌표출력가능
+		
+			gc2.setColor(c);
+			//도트를 그리고
+			//gc2.fillOval(e.getX()-pen_size/2, e.getY()-pen_size/2, pen_size, pen_size);
+			//시작좌표,끝좌표
+				        
+			Graphics2D g2d = (Graphics2D)gc2;
+			 g2d.setStroke(new BasicStroke(pen_size,BasicStroke.CAP_ROUND,0)); 
+			 
+			    x=e.getX(); y=e.getY();              // 마우스의 현재 위치를 알아온다.
+			    if(shape.equals("fd")) {//free drawing
+			    gc2.drawLine(ox, oy, x, y);
+			    }
+			    ox=x; oy=y;   
+			    
+			   
+			    
+				 if(shape.equals("fillrect")) {
+					 gc.drawImage(tmpImage,0,0,panel);
+					   gc2.drawImage(tmpImage,0,0,panel);
+					   gc2.fillRect(sx,sy,ex-sx,ey-sy);
+			   repaint();
+				 }
+			// panelImnage는 paint()에서 이용한다.
+			gc.drawImage(panelImage, 0, 0, panel);
+			  
+			
+	
+			//다른사람들한테 내위치 알려줌
+			SendMouseEvent(e);
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent e) {
+			lblMouseEvent.setText(e.getButton() + " mouseMoved " + e.getX() + "," + e.getY());
+			
+		}
+
+		@Override
+//		//클릭시
+		public void mouseClicked(MouseEvent e) {
+			lblMouseEvent.setText(e.getButton() + " mouseClicked " + e.getX() + "," + e.getY());
+			//Color c = new Color(0,0,255);
+			//gc2.setColor(c);
+		
+			//gc2.fillOval(e.getX()-pen_size/2, e.getY()-pen_size/2, pen_size, pen_size);
+		//	gc.drawImage(panelImage, 0, 0, panel);
+			//상대에게 좌표 날라감
+			//SendMouseEvent(e);
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			lblMouseEvent.setText(e.getButton() + " mouseEntered " + e.getX() + "," + e.getY());
+			// panel.setBackground(Color.YELLOW);
+
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			lblMouseEvent.setText(e.getButton() + " mouseExited " + e.getX() + "," + e.getY());
+			// panel.setBackground(Color.CYAN);
+
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			lblMouseEvent.setText(e.getButton() + " mousePressed " + e.getX() + "," + e.getY());
+			gc3.drawImage(panelImage,0,0,panel);///도형 중간과정 포함
+			  ox=e.getX(); oy=e.getY();      
+			  sx=e.getX(); sy=e.getY();//사각형 시작좌표
+			  
+
+			SendMouseEvent(e);
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			lblMouseEvent.setText(e.getButton() + " mouseReleased " + e.getX() + "," + e.getY());
+			 ex=e.getX(); ey=e.getY();//사각형 끝나는좌표
+		
+			 if(shape.equals("fillrect")) {// 사각형
+			 gc2.fillRect(sx,sy,ex-sx,ey-sy);
+			 }
+			 repaint();
+	
+			SendMouseEvent(e);
+
+		}
+	}
+
+	// keyboard enter key 치면 서버로 전송
+	class TextSendAction implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// Send button을 누르거나 메시지 입력하고 Enter key 치면
+			if (e.getSource() == btnSend || e.getSource() == txtInput) {
+				String msg = null;
+				// msg = String.format("[%s] %s\n", UserName, txtInput.getText());
+				msg = txtInput.getText();
+				SendMessage(msg);
+				txtInput.setText(""); // 메세지를 보내고 나면 메세지 쓰는창을 비운다.
+				txtInput.requestFocus(); // 메세지를 보내고 커서를 다시 텍스트 필드로 위치시킨다
+				if (msg.contains("/exit")) // 종료 처리
+					System.exit(0);
+			}
+		}
+	}
+
+	class ImageSendAction implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// 액션 이벤트가 sendBtn일때 또는 textField 에세 Enter key 치면
+			if (e.getSource() == imgBtn) {
+				frame = new Frame("이미지첨부");
+				fd = new FileDialog(frame, "이미지 선택", FileDialog.LOAD);
+				// frame.setVisible(true);
+				// fd.setDirectory(".\\");
+				fd.setVisible(true);
+				// System.out.println(fd.getDirectory() + fd.getFile());
+				if (fd.getDirectory().length() > 0 && fd.getFile().length() > 0) {
+					ChatMsg obcm = new ChatMsg(UserName, "300", "IMG");
+					ImageIcon img = new ImageIcon(fd.getDirectory() + fd.getFile());
+					obcm.img = img;
+					SendObject(obcm);
+				}
+			}
+		}
+	}
+
+	ImageIcon icon1 = new ImageIcon("src/icon1.jpg");
+
+	
+	public void AppendIcon(ImageIcon icon) {
+		int len = u1_textArea.getDocument().getLength();
+		// 끝으로 이동
+		u1_textArea.setCaretPosition(len);
+		u1_textArea.insertIcon(icon);
+	}
+
+	// 화면에 출력
+	public void AppendText(String msg) {
+		// textArea.append(msg + "\n");
+		// AppendIcon(icon1);
+		msg = msg.trim(); // 앞뒤 blank와 \n을 제거한다.
+		//textArea.setCaretPosition(len);
+		//textArea.replaceSelection(msg + "\n");
+		
+		StyledDocument doc = u1_textArea.getStyledDocument();
+		SimpleAttributeSet left = new SimpleAttributeSet();
+		StyleConstants.setAlignment(left, StyleConstants.ALIGN_LEFT);
+		StyleConstants.setForeground(left, Color.BLACK);
+	    doc.setParagraphAttributes(doc.getLength(), 1, left, false);
+		try {
+			doc.insertString(doc.getLength(), msg+"\n", left );
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int len = u1_textArea.getDocument().getLength();
+		u1_textArea.setCaretPosition(len);
+		//textArea.replaceSelection("\n");
+
+
+	}
+	// 화면 우측에 출력
+	public void AppendTextR(String msg) {
+		msg = msg.trim(); // 앞뒤 blank와 \n을 제거한다.	
+		StyledDocument doc = u1_textArea.getStyledDocument();
+		SimpleAttributeSet right = new SimpleAttributeSet();
+		StyleConstants.setAlignment(right, StyleConstants.ALIGN_RIGHT);
+		StyleConstants.setForeground(right, Color.BLUE);	
+	    doc.setParagraphAttributes(doc.getLength(), 1, right, false);
+		try {
+			doc.insertString(doc.getLength(),msg+"\n", right );
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int len = u1_textArea.getDocument().getLength();
+		u1_textArea.setCaretPosition(len);
+		//textArea.replaceSelection("\n");
+
+	}
+	
+	public void AppendImage(ImageIcon ori_icon) {
+		int len = u1_textArea.getDocument().getLength();
+		u1_textArea.setCaretPosition(len); // place caret at the end (with no selection)
+		Image ori_img = ori_icon.getImage();
+		Image new_img;
+		ImageIcon new_icon;
+		int width, height;
+		double ratio;
+		width = ori_icon.getIconWidth();
+		height = ori_icon.getIconHeight();
+		// Image가 너무 크면 최대 가로 또는 세로 200 기준으로 축소시킨다.
+		if (width > 200 || height > 200) {
+			if (width > height) { // 가로 사진
+				ratio = (double) height / width;
+				width = 200;
+				height = (int) (width * ratio);
+			} else { // 세로 사진
+				ratio = (double) width / height;
+				height = 200;
+				width = (int) (height * ratio);
+			}
+			new_img = ori_img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+			new_icon = new ImageIcon(new_img);
+			u1_textArea.insertIcon(new_icon);
+		} else {
+			u1_textArea.insertIcon(ori_icon);
+			new_img = ori_img;
+		}
+		len = u1_textArea.getDocument().getLength();
+		u1_textArea.setCaretPosition(len);
+		u1_textArea.replaceSelection("\n");
+		// ImageViewAction viewaction = new ImageViewAction();
+		// new_icon.addActionListener(viewaction); // 내부클래스로 액션 리스너를 상속받은 클래스로
+		// panelImage = ori_img.getScaledInstance(panel.getWidth(), panel.getHeight(), Image.SCALE_DEFAULT);
+
+		
+		
+		//혹시몰라서 추가해봄
+		gc3.drawImage(panelImage,0,0,panel.getWidth(), panel.getHeight(), panel);
+		gc2.drawImage(ori_img,  0,  0, panel.getWidth(), panel.getHeight(), panel);
+		gc.drawImage(panelImage, 0, 0, panel.getWidth(), panel.getHeight(), panel);
+	}
+
+	// Windows 처럼 message 제외한 나머지 부분은 NULL 로 만들기 위한 함수
+	public byte[] MakePacket(String msg) {
+		byte[] packet = new byte[BUF_LEN];
+		byte[] bb = null;
+		int i;
+		for (i = 0; i < BUF_LEN; i++)
+			packet[i] = 0;
+		try {
+			bb = msg.getBytes("euc-kr");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(0);
+		}
+		for (i = 0; i < bb.length; i++)
+			packet[i] = bb[i];
+		return packet;
+	}
+
+	// Server에게 network으로 전송
+	public void SendMessage(String msg) {
+		try {
+			// dos.writeUTF(msg);
+//			byte[] bb;
+//			bb = MakePacket(msg);
+//			dos.write(bb, 0, bb.length);
+			ChatMsg obcm = new ChatMsg(UserName, "200", msg);
+			oos.writeObject(obcm);
+		} catch (IOException e) {
+			// AppendText("dos.write() error");
+			AppendText("oos.writeObject() error");
+			try {
+//				dos.close();
+//				dis.close();
+				ois.close();
+				oos.close();
+				socket.close();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+				System.exit(0);
+			}
+		}
+	}
+
+	public void SendObject(Object ob) { // 서버로 메세지를 보내는 메소드
+		try {
+			oos.writeObject(ob);
+		} catch (IOException e) {
+			// textArea.append("메세지 송신 에러!!\n");
+			AppendText("SendObject Error");
+		}
+	}
+}
