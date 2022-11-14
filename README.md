@@ -17,6 +17,8 @@ jdk 17
 ## 게임 실행화면
 <br>
 <br>
-![image](https://user-images.githubusercontent.com/88522164/201666893-2f00c9f8-cc02-4bf7-8443-2d0a2b63dd8a.png)
+
+![image](https://user-images.githubusercontent.com/88522164/201667150-52bd0427-3371-4aaa-8e0b-658503ab452a.png)
+
 
 ![image](https://user-images.githubusercontent.com/88522164/201666921-8da45c7a-07b7-4e3f-8be9-5670cef7d4f8.png)
